@@ -12,6 +12,8 @@ import { useState } from "react";
 import { WaveBackground } from "@/components/WaveBackground";
 import { SiteHeader } from "@/components/SiteHeader";
 import { AIProcessShowcase, HeroCTA } from "@/components/AIProcessShowcase";
+import { AuthModal, openAuth } from "@/components/AuthModal";
+import { StyleShowcase } from "@/components/StyleShowcase";
 
 export const Route = createFileRoute("/")({
   head: () => ({
