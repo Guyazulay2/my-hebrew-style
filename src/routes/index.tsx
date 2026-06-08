@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import {
   ArrowLeft,
   ChevronDown,
@@ -12,6 +12,8 @@ import { useState } from "react";
 import { WaveBackground } from "@/components/WaveBackground";
 import { SiteHeader } from "@/components/SiteHeader";
 import { AIProcessShowcase, HeroCTA } from "@/components/AIProcessShowcase";
+import { AuthModal, openAuth } from "@/components/AuthModal";
+import { StyleShowcase } from "@/components/StyleShowcase";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -40,12 +42,14 @@ function LandingPage() {
 
       <main className="relative">
         <Hero />
+        <StyleShowcase />
         <AIProcessShowcase />
         <Features />
         <Pricing />
         <FAQ />
         <Footer />
       </main>
+      <AuthModal />
     </div>
   );
 }
@@ -257,8 +261,8 @@ function Pricing() {
                 </li>
               ))}
             </ul>
-            <Link
-              to="/app"
+            <button
+              onClick={openAuth}
               className={`mt-8 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition ${
                 p.highlight
                   ? "bg-gradient-to-l from-[#f0d8a8] to-[#b88a3f] text-black shadow-[0_8px_30px_-8px_rgba(240,200,140,0.6)] hover:shadow-[0_12px_40px_-8px_rgba(240,200,140,0.9)]"
@@ -266,7 +270,7 @@ function Pricing() {
               }`}
             >
               {p.cta}
-            </Link>
+            </button>
           </div>
         ))}
       </div>
