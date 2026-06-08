@@ -230,8 +230,8 @@ function ScanRow({
 
 export function HeroCTA() {
   return (
-    <a
-      href="/app"
+    <button
+      onClick={() => window.dispatchEvent(new CustomEvent("open-auth"))}
       className="group relative inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/[0.06] px-7 py-3.5 text-sm font-medium text-white backdrop-blur-md transition hover:border-white/50 hover:bg-white/[0.1]"
       style={{
         boxShadow:
@@ -240,10 +240,9 @@ export function HeroCTA() {
     >
       <span>להתחיל בחינם</span>
       <ArrowLeft className="h-4 w-4 transition group-hover:-translate-x-1" />
-    </a>
+    </button>
   );
 }
-
 
 export function ExternalLinkIcon() {
   return <ExternalLink className="h-3.5 w-3.5" />;
