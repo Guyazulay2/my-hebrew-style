@@ -42,12 +42,14 @@ function LandingPage() {
 
       <main className="relative">
         <Hero />
+        <StyleShowcase />
         <AIProcessShowcase />
         <Features />
         <Pricing />
         <FAQ />
         <Footer />
       </main>
+      <AuthModal />
     </div>
   );
 }
