@@ -232,14 +232,18 @@ export function HeroCTA() {
   return (
     <a
       href="/app"
-      className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-l from-[#f0d8a8] via-[#e8c089] to-[#b88a3f] px-7 py-3.5 text-sm font-semibold text-black shadow-[0_8px_40px_-8px_rgba(240,200,140,0.6)] transition hover:shadow-[0_12px_50px_-8px_rgba(240,200,140,0.9)]"
+      className="group relative inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/[0.06] px-7 py-3.5 text-sm font-medium text-white backdrop-blur-md transition hover:border-white/50 hover:bg-white/[0.1]"
+      style={{
+        boxShadow:
+          "0 0 0 1px rgba(255,255,255,0.05), 0 0 30px -5px rgba(255,255,255,0.25), inset 0 1px 0 rgba(255,255,255,0.15)",
+      }}
     >
       <span>להתחיל בחינם</span>
       <ArrowLeft className="h-4 w-4 transition group-hover:-translate-x-1" />
-      <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-l from-transparent via-white/40 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
     </a>
   );
 }
+
 
 export function ExternalLinkIcon() {
   return <ExternalLink className="h-3.5 w-3.5" />;
