@@ -61,18 +61,16 @@ function Hero() {
       </div>
 
       <h1
-        className="mt-7 max-w-4xl text-glow text-balance text-5xl font-bold leading-[1.05] tracking-tight sm:text-6xl md:text-7xl lg:text-[88px]"
-        style={{ animation: "fade-up 0.9s 0.1s both" }}
+        className="mt-12 max-w-4xl text-balance text-5xl font-medium leading-[1.08] tracking-tight text-white sm:text-6xl md:text-7xl lg:text-[84px]"
+        style={{ animation: "fade-up 0.9s 0.1s both", fontWeight: 500, letterSpacing: "-0.02em" }}
       >
         הסטייל שלך,
         <br />
-        <span className="bg-gradient-to-l from-[#f8e6c0] via-[#e8c089] to-[#b88a3f] bg-clip-text text-transparent">
-          בלחיצה אחת.
-        </span>
+        בלחיצה אחת.
       </h1>
 
       <p
-        className="mt-7 max-w-2xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg"
+        className="mt-10 max-w-2xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg"
         style={{ animation: "fade-up 0.9s 0.2s both" }}
       >
         העלו תמונה, ספרו לנו לאן אתם הולכים — וקבלו לוק שלם שמתאים בדיוק למבנה
@@ -80,17 +78,18 @@ function Hero() {
       </p>
 
       <div
-        className="mt-9 flex flex-wrap items-center justify-center gap-3"
+        className="mt-14 flex flex-wrap items-center justify-center gap-3"
         style={{ animation: "fade-up 0.9s 0.3s both" }}
       >
         <HeroCTA />
         <a
           href="#how"
-          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-6 py-3.5 text-sm font-medium text-foreground transition hover:border-white/20 hover:bg-white/[0.06]"
+          className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-7 py-3.5 text-sm font-medium text-foreground/90 backdrop-blur-md transition hover:border-white/25 hover:bg-white/[0.07]"
         >
           איך זה עובד
         </a>
       </div>
+
 
       <div
         className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground"
