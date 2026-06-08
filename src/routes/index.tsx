@@ -52,13 +52,14 @@ function LandingPage() {
 
 function Hero() {
   return (
-    <section className="relative flex min-h-screen flex-col items-center justify-center px-4 pt-32 pb-20 text-center">
+    <section className="relative flex min-h-screen flex-col items-center justify-center px-4 pt-40 pb-24 text-center">
       <div className="animate-fade-up">
-        <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs text-muted-foreground backdrop-blur-md">
-          <Sparkles className="h-3.5 w-3.5 text-accent" />
+        <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-5 py-2 text-xs text-muted-foreground/90 backdrop-blur-md shadow-[0_0_30px_-10px_rgba(255,255,255,0.3)]">
+          <Sparkles className="h-3.5 w-3.5 text-white/80" />
           סטייליסט אישי · מבוסס AI
         </span>
       </div>
+
 
       <h1
         className="mt-12 max-w-4xl text-balance text-5xl font-medium leading-[1.08] tracking-tight text-white sm:text-6xl md:text-7xl lg:text-[84px]"
