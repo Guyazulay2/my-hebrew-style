@@ -23,9 +23,9 @@ export function WaveBackground() {
       canvas.style.width = width + "px";
       canvas.style.height = height + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      spacing = computeSpacing();
     };
-    resize();
-    window.addEventListener("resize", resize);
+
 
     // density scales with viewport so the dune looks identical on mobile + desktop
     const computeSpacing = () => {
