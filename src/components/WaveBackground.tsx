@@ -134,16 +134,17 @@ export function WaveBackground() {
         }}
       />
 
-      {/* Smoky, diffused crepuscular rays */}
+      {/* Smoky, diffused crepuscular rays — soft, static, no flicker */}
       <div className="pointer-events-none absolute inset-0 flex justify-center overflow-hidden">
-        <div className="relative h-[100vh] w-[90vw]">
-          <SoftRay left="32%" w="120px" o={0.05} skew={-4} />
-          <SoftRay left="42%" w="90px" o={0.07} skew={-2} />
-          <SoftRay left="50%" w="140px" o={0.08} skew={0} />
-          <SoftRay left="58%" w="90px" o={0.06} skew={2} />
-          <SoftRay left="66%" w="120px" o={0.05} skew={4} />
+        <div className="relative h-[100vh] w-[100vw] max-w-[1400px]">
+          <SoftRay left="34%" w="180px" o={0.04} skew={-3} />
+          <SoftRay left="44%" w="140px" o={0.055} skew={-1.2} />
+          <SoftRay left="50%" w="220px" o={0.07} skew={0} />
+          <SoftRay left="56%" w="140px" o={0.05} skew={1.2} />
+          <SoftRay left="64%" w="180px" o={0.04} skew={3} />
         </div>
       </div>
+
 
       {/* Floating dust */}
       <div className="pointer-events-none absolute inset-0">
