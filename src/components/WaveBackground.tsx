@@ -23,13 +23,22 @@ export function WaveBackground() {
       canvas.style.width = width + "px";
       canvas.style.height = height + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      spacing = computeSpacing();
     };
+
+
+    // density scales with viewport so the dune looks identical on mobile + desktop
+    const computeSpacing = () => {
+      const w = window.innerWidth;
+      if (w < 480) return 14;
+      if (w < 900) return 18;
+      return 22;
+    };
+    let spacing = computeSpacing();
     resize();
     window.addEventListener("resize", resize);
-
-    // dense small spacing — thousands of dots
-    const spacing = 22;
     const start = performance.now();
+
 
     // flat ground plane, tilted away from camera
     const project = (x: number, y: number, z: number) => {
@@ -45,6 +54,7 @@ export function WaveBackground() {
       const scale = focal / Math.max(denom, 60);
       return { sx: cx + x * scale, sy: cy + yT * scale, scale };
     };
+
 
     const draw = (t: number) => {
       // ultra-slow, barely moving
@@ -124,16 +134,17 @@ export function WaveBackground() {
         }}
       />
 
-      {/* Smoky, diffused crepuscular rays */}
+      {/* Smoky, diffused crepuscular rays — soft, static, no flicker */}
       <div className="pointer-events-none absolute inset-0 flex justify-center overflow-hidden">
-        <div className="relative h-[100vh] w-[90vw]">
-          <SoftRay left="32%" w="120px" o={0.05} skew={-4} />
-          <SoftRay left="42%" w="90px" o={0.07} skew={-2} />
-          <SoftRay left="50%" w="140px" o={0.08} skew={0} />
-          <SoftRay left="58%" w="90px" o={0.06} skew={2} />
-          <SoftRay left="66%" w="120px" o={0.05} skew={4} />
+        <div className="relative h-[100vh] w-[100vw] max-w-[1400px]">
+          <SoftRay left="34%" w="180px" o={0.04} skew={-3} />
+          <SoftRay left="44%" w="140px" o={0.055} skew={-1.2} />
+          <SoftRay left="50%" w="220px" o={0.07} skew={0} />
+          <SoftRay left="56%" w="140px" o={0.05} skew={1.2} />
+          <SoftRay left="64%" w="180px" o={0.04} skew={3} />
         </div>
       </div>
+
 
       {/* Floating dust */}
       <div className="pointer-events-none absolute inset-0">
@@ -183,11 +194,12 @@ function SoftRay({
       style={{
         left,
         width: w,
-        transform: `skewX(${skew}deg)`,
-        background: `linear-gradient(to bottom, rgba(255,255,255,${o}) 0%, rgba(255,255,255,${o * 0.5}) 35%, transparent 80%)`,
-        filter: "blur(28px)",
-        mixBlendMode: "screen",
+        transform: `translateZ(0) skewX(${skew}deg)`,
+        background: `linear-gradient(to bottom, rgba(255,255,255,${o}) 0%, rgba(255,255,255,${o * 0.45}) 40%, transparent 85%)`,
+        filter: "blur(40px)",
+        willChange: "transform",
       }}
     />
   );
 }
+
