@@ -27,8 +27,14 @@ export function WaveBackground() {
     resize();
     window.addEventListener("resize", resize);
 
-    // dense small spacing — thousands of dots
-    const spacing = 22;
+    // density scales with viewport so the dune looks identical on mobile + desktop
+    const computeSpacing = () => {
+      const w = window.innerWidth;
+      if (w < 480) return 14;
+      if (w < 900) return 18;
+      return 22;
+    };
+    let spacing = computeSpacing();
     const start = performance.now();
 
     // flat ground plane, tilted away from camera
@@ -45,6 +51,7 @@ export function WaveBackground() {
       const scale = focal / Math.max(denom, 60);
       return { sx: cx + x * scale, sy: cy + yT * scale, scale };
     };
+
 
     const draw = (t: number) => {
       // ultra-slow, barely moving
