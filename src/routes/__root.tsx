@@ -86,6 +86,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "theme-color", content: "#0a0a0f" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:title", content: "My Stylist · סטייליסט אישי מבוסס AI" },
+      { name: "twitter:title", content: "My Stylist · סטייליסט אישי מבוסס AI" },
+      { name: "description", content: "My AI Stylist is a Hebrew web app that provides personalized AI-driven fashion recommendations." },
+      { property: "og:description", content: "My AI Stylist is a Hebrew web app that provides personalized AI-driven fashion recommendations." },
+      { name: "twitter:description", content: "My AI Stylist is a Hebrew web app that provides personalized AI-driven fashion recommendations." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/24316071-c3f0-4a58-b9b3-8dc57640889f/id-preview-a012e568--e7204ae2-26cf-4625-a9a4-1bef9ca1f201.lovable.app-1781015602951.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/24316071-c3f0-4a58-b9b3-8dc57640889f/id-preview-a012e568--e7204ae2-26cf-4625-a9a4-1bef9ca1f201.lovable.app-1781015602951.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
