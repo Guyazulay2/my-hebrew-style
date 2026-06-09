@@ -194,11 +194,12 @@ function SoftRay({
       style={{
         left,
         width: w,
-        transform: `skewX(${skew}deg)`,
-        background: `linear-gradient(to bottom, rgba(255,255,255,${o}) 0%, rgba(255,255,255,${o * 0.5}) 35%, transparent 80%)`,
-        filter: "blur(28px)",
-        mixBlendMode: "screen",
+        transform: `translateZ(0) skewX(${skew}deg)`,
+        background: `linear-gradient(to bottom, rgba(255,255,255,${o}) 0%, rgba(255,255,255,${o * 0.45}) 40%, transparent 85%)`,
+        filter: "blur(40px)",
+        willChange: "transform",
       }}
     />
   );
 }
+
