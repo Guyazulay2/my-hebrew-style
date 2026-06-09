@@ -35,7 +35,10 @@ export function WaveBackground() {
       return 22;
     };
     let spacing = computeSpacing();
+    resize();
+    window.addEventListener("resize", resize);
     const start = performance.now();
+
 
     // flat ground plane, tilted away from camera
     const project = (x: number, y: number, z: number) => {
