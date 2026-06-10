@@ -53,6 +53,8 @@ class StylingSession(Base):
     additional_notes: Mapped[str | None] = mapped_column(Text)
     outfit_recommendation: Mapped[dict | None] = mapped_column(JSONB)
     outfit_items: Mapped[list] = mapped_column(JSONB, default=list)
+    is_saved: Mapped[bool] = mapped_column(Boolean, default=False)
+    look_title: Mapped[str | None] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     user: Mapped["User"] = relationship(back_populates="styling_sessions")

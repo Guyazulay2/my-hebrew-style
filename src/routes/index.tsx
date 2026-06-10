@@ -14,6 +14,16 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { AIProcessShowcase, HeroCTA } from "@/components/AIProcessShowcase";
 import { AuthModal, openAuth } from "@/components/AuthModal";
 import { StyleShowcase } from "@/components/StyleShowcase";
+import { SplashScreen } from "@/components/SplashScreen";
+
+// Show splash only on first visit per session
+const SPLASH_KEY = "ms_splash_shown";
+function shouldShowSplash() {
+  if (typeof sessionStorage === "undefined") return false;
+  if (sessionStorage.getItem(SPLASH_KEY)) return false;
+  sessionStorage.setItem(SPLASH_KEY, "1");
+  return true;
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -35,8 +45,11 @@ export const Route = createFileRoute("/")({
 });
 
 function LandingPage() {
+  const [showSplash] = useState(() => shouldShowSplash());
+
   return (
     <div className="relative min-h-screen text-foreground">
+      {showSplash && <SplashScreen />}
       <WaveBackground />
       <SiteHeader />
 

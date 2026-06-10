@@ -193,6 +193,20 @@ Respond with JSON only."""
         items=items_with_results
     )
 
+def _session_dict(s: StylingSession) -> dict:
+    return {
+        "id": str(s.id),
+        "event_type": s.event_type,
+        "weather_data": s.weather_data,
+        "outfit_description": (s.outfit_recommendation or {}).get("outfit_description", ""),
+        "style_tip": (s.outfit_recommendation or {}).get("style_tip", ""),
+        "items": s.outfit_items or [],
+        "items_count": len(s.outfit_items or []),
+        "is_saved": s.is_saved,
+        "look_title": s.look_title,
+        "created_at": s.created_at.isoformat(),
+    }
+
 @router.get("/history")
 async def get_history(
     user: User = Depends(get_current_user),
@@ -202,17 +216,66 @@ async def get_history(
         select(StylingSession)
         .where(StylingSession.user_id == user.id)
         .order_by(desc(StylingSession.created_at))
-        .limit(20)
+        .limit(50)
     )
-    sessions = result.scalars().all()
-    return [
-        {
-            "id": str(s.id),
-            "event_type": s.event_type,
-            "weather_data": s.weather_data,
-            "outfit_description": (s.outfit_recommendation or {}).get("outfit_description", ""),
-            "items_count": len(s.outfit_items or []),
-            "created_at": s.created_at.isoformat()
-        }
-        for s in sessions
-    ]
+    return [_session_dict(s) for s in result.scalars().all()]
+
+
+@router.get("/wardrobe")
+async def get_wardrobe(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(
+        select(StylingSession)
+        .where(StylingSession.user_id == user.id, StylingSession.is_saved == True)
+        .order_by(desc(StylingSession.created_at))
+    )
+    return [_session_dict(s) for s in result.scalars().all()]
+
+
+class SaveRequest(BaseModel):
+    title: str | None = None
+
+@router.post("/{session_id}/save")
+async def toggle_save(
+    session_id: str,
+    body: SaveRequest = SaveRequest(),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    import uuid as _uuid
+    try:
+        sid = _uuid.UUID(session_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="מזהה לא תקין")
+
+    session = await db.get(StylingSession, sid)
+    if not session or session.user_id != user.id:
+        raise HTTPException(status_code=404, detail="לא נמצא")
+
+    session.is_saved = not session.is_saved
+    if session.is_saved and body.title:
+        session.look_title = body.title
+    elif not session.is_saved:
+        session.look_title = None
+    return {"is_saved": session.is_saved, "look_title": session.look_title}
+
+
+@router.delete("/{session_id}")
+async def delete_session(
+    session_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    import uuid as _uuid
+    try:
+        sid = _uuid.UUID(session_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="מזהה לא תקין")
+
+    session = await db.get(StylingSession, sid)
+    if not session or session.user_id != user.id:
+        raise HTTPException(status_code=404, detail="לא נמצא")
+    await db.delete(session)
+    return {"deleted": True}

@@ -49,7 +49,11 @@ CREATE TABLE styling_sessions (
     -- AI Output
     outfit_recommendation JSONB,  -- full Claude response
     outfit_items JSONB DEFAULT '[]', -- parsed items with search results
-    
+
+    -- Wardrobe
+    is_saved BOOLEAN DEFAULT FALSE,
+    look_title VARCHAR(255),
+
     -- Meta
     created_at TIMESTAMPTZ DEFAULT NOW()
 );

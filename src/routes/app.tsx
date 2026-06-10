@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
   ArrowRight,
+  BookMarked,
   Check,
   ExternalLink,
   Loader2,
@@ -21,6 +22,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import {
   generateLook,
   searchByImage,
+  toggleSave,
   type StylingItem,
   type StylingResult,
   type VisualSearchResult,
@@ -500,6 +502,8 @@ function BodyScanner({ onBack }: { onBack: () => void }) {
   const [city, setCity] = useState("Tel Aviv");
   const [result, setResult] = useState<StylingResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const handleFile = (f: File) => {
     setFile(f);
@@ -635,7 +639,6 @@ function BodyScanner({ onBack }: { onBack: () => void }) {
 
           {result && (
             <div className="space-y-3 max-h-[520px] overflow-y-auto pr-1">
-              {/* Description */}
               <div className="rounded-2xl border border-purple-400/20 bg-purple-500/5 p-4 animate-result-in">
                 <div className="text-sm leading-relaxed">{result.outfit_description}</div>
                 {result.style_tip && (
@@ -643,6 +646,27 @@ function BodyScanner({ onBack }: { onBack: () => void }) {
                     💡 {result.style_tip}
                   </div>
                 )}
+                <button
+                  onClick={async () => {
+                    if (!result.session_id) return;
+                    setSaving(true);
+                    try {
+                      const r = await toggleSave(result.session_id, context || undefined);
+                      setIsSaved(r.is_saved);
+                    } finally {
+                      setSaving(false);
+                    }
+                  }}
+                  disabled={saving}
+                  className={`mt-3 inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition ${
+                    isSaved
+                      ? "bg-accent/20 text-accent border border-accent/40"
+                      : "bg-white/5 text-muted-foreground border border-white/10 hover:bg-white/10"
+                  }`}
+                >
+                  {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <BookMarked className="h-3.5 w-3.5" />}
+                  {isSaved ? "נשמר בארון ✓" : "שמור לארון הבגדים"}
+                </button>
               </div>
               {result.items.map((item, i) => (
                 <OutfitItemCard key={i} item={item} index={i} />

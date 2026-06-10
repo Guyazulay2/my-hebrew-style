@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { LogOut, Menu, Sparkles, X } from "lucide-react";
+import { BookMarked, LogOut, Menu, Sparkles, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { openAuth } from "@/components/AuthModal";
 import { isAuthenticated, onAuthChange } from "@/lib/api/client";
@@ -68,6 +68,13 @@ export function SiteHeader() {
             {authed ? (
               <>
                 <Link
+                  to="/wardrobe"
+                  className="hidden items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-muted-foreground transition hover:bg-white/10 hover:text-white sm:inline-flex"
+                >
+                  <BookMarked className="h-3.5 w-3.5" />
+                  הארון
+                </Link>
+                <Link
                   to="/app"
                   className="hidden items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-5 py-2 text-sm font-medium text-accent transition hover:bg-accent/20 sm:inline-flex"
                 >
@@ -123,6 +130,14 @@ export function SiteHeader() {
                 >
                   <Sparkles className="h-3.5 w-3.5" />
                   המרחב שלי
+                </Link>
+                <Link
+                  to="/wardrobe"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm text-muted-foreground transition hover:bg-white/5 hover:text-white"
+                >
+                  <BookMarked className="h-3.5 w-3.5" />
+                  ארון הבגדים
                 </Link>
                 <button
                   onClick={handleLogout}

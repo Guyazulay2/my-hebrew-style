@@ -59,3 +59,34 @@ export async function searchByImage(file: File): Promise<VisualSearchResult> {
     body: form,
   });
 }
+
+export interface WardrobeSession {
+  id: string;
+  event_type: string;
+  weather_data: { temp?: number; condition?: string; city?: string } | null;
+  outfit_description: string;
+  style_tip: string;
+  items: StylingItem[];
+  items_count: number;
+  is_saved: boolean;
+  look_title: string | null;
+  created_at: string;
+}
+
+export async function getWardrobe(): Promise<WardrobeSession[]> {
+  return apiFetch<WardrobeSession[]>("/api/styling/wardrobe");
+}
+
+export async function toggleSave(
+  session_id: string,
+  title?: string
+): Promise<{ is_saved: boolean; look_title: string | null }> {
+  return apiFetch(`/api/styling/${session_id}/save`, {
+    method: "POST",
+    body: JSON.stringify({ title: title ?? null }),
+  });
+}
+
+export async function deleteSession(session_id: string): Promise<void> {
+  await apiFetch(`/api/styling/${session_id}`, { method: "DELETE" });
+}
