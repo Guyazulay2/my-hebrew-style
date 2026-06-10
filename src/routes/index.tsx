@@ -66,8 +66,18 @@ function Hero() {
 
 
       <h1
-        className="mt-12 max-w-4xl text-balance text-5xl font-medium leading-[1.08] tracking-tight text-white sm:text-6xl md:text-7xl lg:text-[84px]"
-        style={{ animation: "fade-up 0.9s 0.1s both", fontWeight: 500, letterSpacing: "-0.02em" }}
+        className="mt-12 max-w-4xl text-balance text-5xl font-medium leading-[1.08] tracking-tight sm:text-6xl md:text-7xl lg:text-[84px]"
+        style={{
+          animation: "fade-up 0.9s 0.1s both",
+          fontWeight: 500,
+          letterSpacing: "-0.02em",
+          backgroundImage:
+            "linear-gradient(180deg, #ffffff 0%, #fbf3e2 45%, #e7c98a 100%)",
+          WebkitBackgroundClip: "text",
+          backgroundClip: "text",
+          color: "transparent",
+          WebkitTextFillColor: "transparent",
+        }}
       >
         הסטייל שלך,
         <br />
