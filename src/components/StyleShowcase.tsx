@@ -120,32 +120,8 @@ export function StyleShowcase() {
             />
           )}
 
-          {/* body landmark dots */}
-          {phase >= 1 && (
-            <svg
-              className="pointer-events-none absolute inset-0 h-full w-full"
-              viewBox="0 0 100 125"
-              preserveAspectRatio="xMidYMid slice"
-              style={{ animation: "fade-up 0.6s 0.3s both" }}
-            >
-              {[
-                [50, 14],
-                [42, 24],
-                [58, 24],
-                [50, 38],
-                [44, 52],
-                [56, 52],
-                [50, 68],
-                [46, 90],
-                [54, 90],
-              ].map(([x, y], i) => (
-                <g key={i}>
-                  <circle cx={x} cy={y} r="0.8" fill="rgba(200,230,255,0.95)" />
-                  <circle cx={x} cy={y} r="2.2" fill="rgba(180,220,255,0.18)" />
-                </g>
-              ))}
-            </svg>
-          )}
+          {/* (landmark dots removed for a cleaner look) */}
+
 
           {/* top badge */}
           <div className="absolute right-4 top-4 flex items-center gap-2 rounded-full border border-white/15 bg-black/55 px-3 py-1.5 text-[11px] text-white/90 backdrop-blur-md">
