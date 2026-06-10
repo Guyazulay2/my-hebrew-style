@@ -1,45 +1,102 @@
 const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
+const TOKEN_KEY = "ms_token";
+const USER_KEY = "ms_user";
+
+/* ── token helpers ── */
+
 export function getToken(): string | null {
-  return localStorage.getItem("ms_token");
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) return null;
+  // Check JWT expiry without a library: decode the payload
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    if (payload.exp && Date.now() / 1000 > payload.exp) {
+      // Expired — clear silently
+      clearAuth();
+      return null;
+    }
+  } catch {
+    // Malformed token — clear it
+    clearAuth();
+    return null;
+  }
+  return token;
 }
 
 export function setToken(token: string) {
-  localStorage.setItem("ms_token", token);
+  localStorage.setItem(TOKEN_KEY, token);
+  dispatchAuthChange();
 }
 
-export function clearToken() {
-  localStorage.removeItem("ms_token");
-  localStorage.removeItem("ms_user");
+export function clearAuth() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  dispatchAuthChange();
 }
+
+/** @deprecated use clearAuth */
+export const clearToken = clearAuth;
 
 export function setUser(user: { id: string; is_onboarded: boolean }) {
-  localStorage.setItem("ms_user", JSON.stringify(user));
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
 export function getUser(): { id: string; is_onboarded: boolean } | null {
-  const s = localStorage.getItem("ms_user");
-  return s ? JSON.parse(s) : null;
+  const s = localStorage.getItem(USER_KEY);
+  if (!s) return null;
+  try { return JSON.parse(s); } catch { return null; }
 }
+
+export function isAuthenticated(): boolean {
+  return getToken() !== null;
+}
+
+/* ── reactive auth state ── */
+
+const AUTH_EVENT = "ms-auth-changed";
+
+function dispatchAuthChange() {
+  window.dispatchEvent(new CustomEvent(AUTH_EVENT));
+}
+
+export function onAuthChange(fn: () => void) {
+  window.addEventListener(AUTH_EVENT, fn);
+  return () => window.removeEventListener(AUTH_EVENT, fn);
+}
+
+/* ── API fetch ── */
 
 export async function apiFetch<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
   const token = getToken();
+  const isFormData = options.body instanceof FormData;
+
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(options.headers as Record<string, string>),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-  if (options.body instanceof FormData) {
-    delete headers["Content-Type"];
-  }
 
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail ?? "שגיאת שרת");
+
+  // Auto-logout on 401
+  if (res.status === 401) {
+    clearAuth();
+    throw new Error("פג תוקף החיבור — אנא התחברו מחדש");
   }
+
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      const body = await res.json();
+      // Don't leak raw server errors to UI — normalize them
+      detail = typeof body.detail === "string" ? body.detail : "שגיאת שרת";
+    } catch { /* ignore */ }
+    throw new Error(detail);
+  }
+
   return res.json();
 }

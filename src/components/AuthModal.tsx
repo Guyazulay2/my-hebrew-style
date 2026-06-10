@@ -2,8 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { X, Mail, Lock, User, AlertCircle, Loader2 } from "lucide-react";
 import { register, login } from "@/lib/api/auth";
+import { isAuthenticated } from "@/lib/api/client";
 
 export function openAuth() {
+  // If already logged in, just navigate to the app
+  if (isAuthenticated()) {
+    window.dispatchEvent(new CustomEvent("open-auth-redirect"));
+    return;
+  }
   window.dispatchEvent(new CustomEvent("open-auth"));
 }
 
@@ -24,9 +30,14 @@ export function AuthModal() {
       setError(null);
       setOpen(true);
     };
+    const redirectHandler = () => navigate({ to: "/app" });
     window.addEventListener("open-auth", handler);
-    return () => window.removeEventListener("open-auth", handler);
-  }, []);
+    window.addEventListener("open-auth-redirect", redirectHandler);
+    return () => {
+      window.removeEventListener("open-auth", handler);
+      window.removeEventListener("open-auth-redirect", redirectHandler);
+    };
+  }, [navigate]);
 
   const close = () => {
     if (loading) return;

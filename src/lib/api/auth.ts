@@ -1,4 +1,8 @@
-import { apiFetch, setToken, setUser } from "./client";
+import { apiFetch, setToken, setUser, clearAuth } from "./client";
+
+export function logout() {
+  clearAuth();
+}
 
 interface TokenResponse {
   access_token: string;

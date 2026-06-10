@@ -106,17 +106,29 @@ async def search_israel_stores(query: str) -> list[dict]:
         results.extend(israel_stores[:4])
         return results
 
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
+ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+ALLOWED_EXT  = {"jpg", "jpeg", "png", "webp"}
+
 @router.post("/image")
 async def search_by_image(
     file: UploadFile = File(...),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    ext = file.filename.split(".")[-1].lower() if "." in file.filename else "jpg"
-    if ext not in ["jpg", "jpeg", "png", "webp"]:
+    # Validate content-type
+    if file.content_type and file.content_type not in ALLOWED_MIME:
+        raise HTTPException(status_code=400, detail="סוג קובץ לא נתמך — JPG / PNG / WEBP בלבד")
+
+    ext = (file.filename or "").rsplit(".", 1)[-1].lower()
+    if ext not in ALLOWED_EXT:
         ext = "jpg"
 
     content = await file.read()
+
+    # Enforce size limit
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="הקובץ גדול מדי — מקסימום 10MB")
     filename = f"searches/{user.id}_{uuid.uuid4().hex[:8]}.{ext}"
     filepath = f"/app/uploads/{filename}"
     os.makedirs(os.path.dirname(filepath), exist_ok=True)

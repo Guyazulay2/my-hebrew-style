@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
@@ -25,9 +25,15 @@ import {
   type StylingResult,
   type VisualSearchResult,
 } from "@/lib/api/styling";
-import { getToken } from "@/lib/api/client";
+import { isAuthenticated } from "@/lib/api/client";
 
 export const Route = createFileRoute("/app")({
+  // Guard: redirect to home if not authenticated — runs before render (no flash)
+  beforeLoad: () => {
+    if (!isAuthenticated()) {
+      throw new Error("unauthenticated");
+    }
+  },
   head: () => ({
     meta: [
       { title: "My Stylist · סורק AI" },
@@ -40,12 +46,7 @@ export const Route = createFileRoute("/app")({
 type Mode = "choose" | "clothing" | "body";
 
 function AppWorkspace() {
-  const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>("choose");
-
-  useEffect(() => {
-    if (!getToken()) navigate({ to: "/" });
-  }, [navigate]);
 
   return (
     <div className="relative min-h-screen text-foreground">
