@@ -1,5 +1,32 @@
 import { apiFetch } from "./client";
 
+export interface BodyScanResult {
+  body_photo_url: string;
+  cutout_url: string | null;
+  cutout_image: string | null;
+  body_type: string | null;
+  body_type_label: string | null;
+  detected: boolean;
+  shoulder_hip_ratio: number | null;
+  detection_method: string | null;
+  style_note: string;
+  confidence: number | null;
+  landmarks_count: number | null;
+  image_width: number | null;
+  image_height: number | null;
+  annotated_image: string | null;
+  message: string;
+}
+
+export async function uploadBodyPhoto(file: File): Promise<BodyScanResult> {
+  const form = new FormData();
+  form.append("file", file);
+  return apiFetch<BodyScanResult>("/api/user/body-photo", {
+    method: "POST",
+    body: form,
+  });
+}
+
 export interface StylingItem {
   category: string;
   name: string;
@@ -35,11 +62,13 @@ export async function generateLook(
 export interface VisualSearchResult {
   search_id: string;
   image_url: string;
+  cutout_image: string | null;
   analysis: {
     item_type: string;
     color: string;
     style: string;
     description: string;
+    gender?: string;
     search_queries: string[];
   };
   results: Array<{
@@ -89,4 +118,15 @@ export async function toggleSave(
 
 export async function deleteSession(session_id: string): Promise<void> {
   await apiFetch(`/api/styling/${session_id}`, { method: "DELETE" });
+}
+
+export interface TryOnResult {
+  try_on_image: string;
+  mime_type: string;
+}
+
+export async function tryOn(session_id: string): Promise<TryOnResult> {
+  return apiFetch<TryOnResult>(`/api/styling/${session_id}/try-on`, {
+    method: "POST",
+  });
 }

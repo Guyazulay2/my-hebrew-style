@@ -5,6 +5,7 @@ from pydantic import BaseModel
 import httpx
 import json
 import os
+import base64
 
 from models.database import get_db, User, StylingSession
 from routers.user import get_current_user
@@ -14,6 +15,8 @@ router = APIRouter()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 SERPAPI_KEY = os.getenv("SERPAPI_KEY", "")
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+GEMINI_FALLBACK_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+GEMINI_IMAGE_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent"
 
 
 class StylingRequest(BaseModel):
@@ -135,21 +138,30 @@ Context:
 
 Respond with JSON only."""
 
+    gemini_payload = {
+        "contents": [{"parts": [{"text": user_prompt}]}],
+        "generationConfig": {"temperature": 0.7, "maxOutputTokens": 1024},
+    }
+
     try:
         async with httpx.AsyncClient(timeout=30) as client:
-            resp = await client.post(
-                f"{GEMINI_URL}?key={GEMINI_API_KEY}",
-                json={
-                    "contents": [{"parts": [{"text": user_prompt}]}],
-                    "generationConfig": {
-                        "temperature": 0.7,
-                        "maxOutputTokens": 1024,
-                    }
-                }
-            )
+            resp = await client.post(f"{GEMINI_URL}?key={GEMINI_API_KEY}", json=gemini_payload)
 
+        # On quota/rate-limit, try the fallback model
+        if resp.status_code in (429, 503, 500):
+            async with httpx.AsyncClient(timeout=30) as client:
+                resp = await client.post(f"{GEMINI_FALLBACK_URL}?key={GEMINI_API_KEY}", json=gemini_payload)
+
+        if resp.status_code == 429:
+            raise HTTPException(
+                status_code=503,
+                detail="מכסת ה-AI מוצתה — ודא שמפתח GEMINI_API_KEY תקין ויש לו קרדיט פעיל, או נסה שוב עוד מספר דקות."
+            )
         if resp.status_code != 200:
-            raise HTTPException(status_code=502, detail=f"Gemini error: {resp.text}")
+            raise HTTPException(
+                status_code=502,
+                detail="שירות ה-AI אינו זמין כרגע — בדוק את מפתח ה-GEMINI_API_KEY."
+            )
 
         text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
 
@@ -279,3 +291,113 @@ async def delete_session(
         raise HTTPException(status_code=404, detail="לא נמצא")
     await db.delete(session)
     return {"deleted": True}
+
+
+@router.post("/{session_id}/try-on")
+async def virtual_try_on(
+    session_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    if not GEMINI_API_KEY:
+        raise HTTPException(status_code=503, detail="AI service not configured")
+
+    import uuid as _uuid
+    try:
+        sid = _uuid.UUID(session_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="מזהה לא תקין")
+
+    session = await db.get(StylingSession, sid)
+    if not session or session.user_id != user.id:
+        raise HTTPException(status_code=404, detail="לא נמצא")
+
+    if not user.body_photo_url:
+        raise HTTPException(status_code=400, detail="אנא העלה תמונת גוף תחילה")
+
+    # Derive cutout path from body_photo_url using naming convention
+    # body_photo_url = /uploads/body/{stem}.{ext}
+    # cutout_path    = /app/uploads/body/{stem}_cutout.png
+    photo_url = user.body_photo_url  # e.g. /uploads/body/uuid_abc123.jpg
+    parts = photo_url.rsplit("/", 1)
+    stem_with_ext = parts[-1]
+    stem = stem_with_ext.rsplit(".", 1)[0]
+    cutout_file = f"/app/uploads/body/{stem}_cutout.png"
+
+    outfit_data = session.outfit_recommendation or {}
+    outfit_desc = outfit_data.get("outfit_description", "")
+    items = session.outfit_items or []
+    items_text = ", ".join(
+        f"{it.get('name', '')} ({it.get('category', '')})"
+        for it in items[:5]
+        if it.get("name")
+    )
+
+    # Read cutout file
+    try:
+        with open(cutout_file, "rb") as f:
+            cutout_bytes = f.read()
+        cutout_b64 = base64.b64encode(cutout_bytes).decode()
+        image_mime = "image/png"
+    except FileNotFoundError:
+        # Fallback: use original body photo
+        try:
+            orig_file = f"/app{photo_url}"
+            with open(orig_file, "rb") as f:
+                cutout_bytes = f.read()
+            cutout_b64 = base64.b64encode(cutout_bytes).decode()
+            ext = photo_url.rsplit(".", 1)[-1].lower()
+            image_mime = f"image/{'jpeg' if ext in ('jpg', 'jpeg') else ext}"
+        except Exception:
+            raise HTTPException(status_code=500, detail="לא ניתן לטעון את תמונת הגוף")
+
+    prompt = f"""You are a virtual fashion stylist.
+Take this person (shown in the image) and generate a realistic photo of them wearing the following outfit:
+
+Outfit: {outfit_desc}
+Items: {items_text}
+
+Instructions:
+- Keep the person's face, body shape, skin tone, and hair exactly the same
+- Only change the clothing to match the described outfit
+- The result should look like a real photo, not a drawing
+- Use natural lighting and a neutral background
+- The pose should be natural and confident"""
+
+    try:
+        async with httpx.AsyncClient(timeout=90) as client:
+            resp = await client.post(
+                f"{GEMINI_IMAGE_URL}?key={GEMINI_API_KEY}",
+                json={
+                    "contents": [{
+                        "parts": [
+                            {"text": prompt},
+                            {"inline_data": {"mime_type": image_mime, "data": cutout_b64}}
+                        ]
+                    }],
+                    "generationConfig": {
+                        "responseModalities": ["IMAGE", "TEXT"],
+                    }
+                }
+            )
+
+        if resp.status_code != 200:
+            raise HTTPException(status_code=502, detail=f"AI error: {resp.status_code}")
+
+        candidates = resp.json().get("candidates", [])
+        if not candidates:
+            raise HTTPException(status_code=502, detail="AI לא החזיר תוצאה")
+
+        for part in candidates[0].get("content", {}).get("parts", []):
+            if "inline_data" in part:
+                return {
+                    "try_on_image": part["inline_data"]["data"],
+                    "mime_type": part["inline_data"].get("mime_type", "image/png"),
+                }
+
+        raise HTTPException(status_code=502, detail="AI לא יצר תמונה")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=502, detail="שגיאה ביצירת תמונת Try-On")

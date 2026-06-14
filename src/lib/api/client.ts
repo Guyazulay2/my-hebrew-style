@@ -92,9 +92,13 @@ export async function apiFetch<T>(
     let detail = res.statusText;
     try {
       const body = await res.json();
-      // Don't leak raw server errors to UI — normalize them
       detail = typeof body.detail === "string" ? body.detail : "שגיאת שרת";
     } catch { /* ignore */ }
+    // User exists in token but not in DB (e.g. DB was reset) — force logout
+    if (res.status === 404 && detail === "User not found") {
+      clearAuth();
+      throw new Error("פג תוקף החיבור — אנא התחברו מחדש");
+    }
     throw new Error(detail);
   }
 

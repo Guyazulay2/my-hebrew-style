@@ -18,6 +18,9 @@ RUN apt-get update --allow-releaseinfo-change \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Pre-download rembg model at build time so it's cached in the image
+RUN python -c "from rembg import new_session; new_session('u2net_human_seg'); new_session('u2net')" || true
+
 COPY . .
 
 RUN mkdir -p /app/uploads

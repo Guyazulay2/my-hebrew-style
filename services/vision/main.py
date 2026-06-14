@@ -8,6 +8,21 @@ import io
 import math
 import base64
 
+_REMBG_AVAILABLE = False
+_rembg_session = None
+_rembg_general_session = None
+
+try:
+    from rembg import remove as _rembg_remove, new_session as _rembg_new_session
+    _rembg_session = _rembg_new_session("u2net_human_seg")
+    _REMBG_AVAILABLE = True
+    try:
+        _rembg_general_session = _rembg_new_session("u2net")
+    except Exception:
+        _rembg_general_session = _rembg_session
+except Exception:
+    pass
+
 app = FastAPI(title="My Stylist Vision Service")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
@@ -189,11 +204,25 @@ def draw_skeleton(img_bgr: np.ndarray, landmarks, img_w: int, img_h: int) -> np.
     return out
 
 
+MAX_UPLOAD_BYTES = 15 * 1024 * 1024
+ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp"}
+
 @app.post("/analyze")
 async def analyze_body(file: UploadFile = File(...)):
+    if file.content_type and file.content_type not in ALLOWED_MIME:
+        raise HTTPException(status_code=400, detail="סוג קובץ לא נתמך — JPG / PNG / WEBP בלבד")
+
     content = await file.read()
+
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="הקובץ גדול מדי — מקסימום 15MB")
+
     try:
         img = Image.open(io.BytesIO(content)).convert("RGB")
+    except Exception:
+        raise HTTPException(status_code=400, detail="לא ניתן לפתוח את הקובץ — קובץ תמונה לא תקין")
+
+    try:
         max_size = 1024
         if max(img.size) > max_size:
             ratio = max_size / max(img.size)
@@ -207,12 +236,11 @@ async def analyze_body(file: UploadFile = File(...)):
             results = pose.process(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB))
 
         if not results.pose_landmarks:
-            _, buf = cv2.imencode('.jpg', img_bgr, [cv2.IMWRITE_JPEG_QUALITY, 85])
             return {
                 "detected": False,
                 "body_type": None,
-                "message": "לא זוהה גוף. נסה תמונה עם גוף מלא על רקע בהיר.",
-                "annotated_image": base64.b64encode(buf.tobytes()).decode()
+                "message": "לא זוהה גוף בתמונה. אנא העלה תמונה של גוף מלא, עומד ישר, על רקע בהיר.",
+                "annotated_image": None,
             }
 
         annotated = draw_skeleton(img_bgr, results.pose_landmarks, w, h)
@@ -221,27 +249,71 @@ async def analyze_body(file: UploadFile = File(...)):
 
         analysis = calculate_body_type_v2(results.pose_landmarks, img_bgr, w, h)
 
-        lm_data = [
-            {"id": i, "x": round(lm.x,3), "y": round(lm.y,3), "visibility": round(lm.visibility,2)}
-            for i, lm in enumerate(results.pose_landmarks.landmark)
-        ]
-        visible_count = len([l for l in lm_data if l["visibility"] > 0.35])
+        visible_count = len([
+            lm for lm in results.pose_landmarks.landmark
+            if lm.visibility > 0.35
+        ])
+
+        body_type_labels = {
+            "inverted_triangle": "משולש הפוך",
+            "pear": "אגס",
+            "hourglass": "שעון חול",
+            "rectangle": "מלבן",
+            "athletic": "ספורטיבי",
+            "average": "ממוצע",
+            "unknown": "לא ידוע",
+        }
+        body_type = analysis.get("body_type", "average")
+
+        # Background removal — produce a clean cutout PNG
+        cutout_b64 = None
+        if _REMBG_AVAILABLE:
+            try:
+                cutout_bytes = _rembg_remove(content, session=_rembg_session)
+                cutout_b64 = base64.b64encode(cutout_bytes).decode()
+            except Exception:
+                pass
 
         return {
             "detected": True,
-            "body_type": analysis.get("body_type"),
+            "body_type": body_type,
+            "body_type_label": body_type_labels.get(body_type, body_type),
             "shoulder_hip_ratio": analysis.get("shoulder_hip_ratio"),
             "detection_method": analysis.get("detection_method", "landmark"),
             "style_note": analysis.get("style_note", ""),
             "confidence": analysis.get("confidence", 0.8),
             "landmarks_count": visible_count,
             "annotated_image": img_b64,
+            "cutout_image": cutout_b64,
             "image_width": w,
             "image_height": h,
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="שגיאה בניתוח התמונה — נסה שוב")
+
+
+@app.post("/cutout")
+async def remove_background_general(file: UploadFile = File(...)):
+    """General background removal — for clothing items and other objects."""
+    if not _REMBG_AVAILABLE:
+        return {"cutout_image": None, "available": False}
+
+    if file.content_type and file.content_type not in ALLOWED_MIME:
+        raise HTTPException(status_code=400, detail="סוג קובץ לא נתמך")
+
+    content = await file.read()
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="הקובץ גדול מדי")
+
+    try:
+        sess = _rembg_general_session if _rembg_general_session else _rembg_session
+        cutout_bytes = _rembg_remove(content, session=sess)
+        return {"cutout_image": base64.b64encode(cutout_bytes).decode(), "available": True}
+    except Exception:
+        raise HTTPException(status_code=500, detail="שגיאה בהסרת רקע")
 
 
 @app.get("/health")

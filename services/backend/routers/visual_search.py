@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel
 import httpx
 import aiofiles
 import uuid
@@ -17,10 +18,11 @@ GEMINI_VISION_URL = "https://generativelanguage.googleapis.com/v1beta/models/gem
 
 async def analyze_clothing_with_gemini(image_bytes: bytes, mime_type: str) -> dict:
     if not GEMINI_API_KEY:
-        return {"item_type": "clothing", "description": "clothing item", "search_queries": ["בגד דומה לקנות"]}
-    
-    prompt = """Analyze this clothing item image and respond with ONLY valid JSON, no markdown:
+        return {"is_clothing": True, "item_type": "clothing", "description": "clothing item", "search_queries": ["בגד דומה לקנות"]}
+
+    prompt = """Analyze this image and respond with ONLY valid JSON, no markdown:
 {
+  "is_clothing": true or false (true only if the image shows a clothing/fashion item),
   "item_type": "סוג הפריט בעברית",
   "gender": "גברים/נשים/יוניסקס",
   "color": "צבע עיקרי בעברית",
@@ -32,6 +34,7 @@ async def analyze_clothing_with_gemini(image_bytes: bytes, mime_type: str) -> di
     "english search query for broader results"
   ]
 }
+Set is_clothing to false if the image does not show clothing (e.g. person, food, car, landscape).
 Be very specific about colors, patterns, cut and style."""
 
     try:
@@ -46,7 +49,7 @@ Be very specific about colors, patterns, cut and style."""
                             {"inline_data": {"mime_type": mime_type, "data": img_b64}}
                         ]
                     }],
-                    "generationConfig": {"temperature": 0.3, "maxOutputTokens": 512}
+                    "generationConfig": {"temperature": 0.2, "maxOutputTokens": 512}
                 }
             )
         if resp.status_code == 200:
@@ -55,10 +58,12 @@ Be very specific about colors, patterns, cut and style."""
                 text = text.split("```")[1]
                 if text.startswith("json"):
                     text = text[4:]
-            return json.loads(text.strip())
+            result = json.loads(text.strip())
+            result.setdefault("is_clothing", True)
+            return result
     except Exception:
         pass
-    return {"item_type": "clothing", "description": "clothing item", "search_queries": ["בגד דומה"]}
+    return {"is_clothing": True, "item_type": "clothing", "description": "clothing item", "search_queries": ["בגד דומה"]}
 
 async def search_israel_stores(query: str) -> list[dict]:
     results = []
@@ -140,7 +145,31 @@ async def search_by_image(
     mime_type = f"image/{ext}" if ext != "jpg" else "image/jpeg"
 
     analysis = await analyze_clothing_with_gemini(content, mime_type)
-    
+
+    if not analysis.get("is_clothing", True):
+        try:
+            os.remove(filepath)
+        except Exception:
+            pass
+        raise HTTPException(
+            status_code=422,
+            detail="התמונה שהועלתה אינה מכילה פריט לבוש. אנא העלה תמונה של חולצה, מכנסיים, שמלה או פריט לבוש אחר."
+        )
+
+    # Background removal via vision service
+    cutout_b64 = None
+    try:
+        vision_url = os.getenv("VISION_SERVICE_URL", "http://vision:8001")
+        async with httpx.AsyncClient(timeout=30) as client:
+            cutout_resp = await client.post(
+                f"{vision_url}/cutout",
+                files={"file": (f"item.{ext}", content, mime_type)}
+            )
+            if cutout_resp.status_code == 200:
+                cutout_b64 = cutout_resp.json().get("cutout_image")
+    except Exception:
+        pass
+
     all_results = []
     search_queries = analysis.get("search_queries", ["בגד דומה"])
     
@@ -162,23 +191,32 @@ async def search_by_image(
         "search_id": str(search_record.id),
         "image_url": image_url,
         "analysis": analysis,
-        "results": all_results
+        "results": all_results,
+        "cutout_image": cutout_b64,
     }
+
+class SaveItemRequest(BaseModel):
+    title: str | None = None
+    price: str | None = None
+    link: str | None = None
+    thumbnail: str | None = None
+    source: str | None = None
+    category: str | None = None
 
 @router.post("/save-item")
 async def save_item(
-    item: dict,
+    item: SaveItemRequest,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     saved = SavedItem(
         user_id=user.id,
-        title=item.get("title"),
-        price=item.get("price"),
-        link=item.get("link"),
-        thumbnail_url=item.get("thumbnail"),
-        source=item.get("source"),
-        category=item.get("category")
+        title=item.title,
+        price=item.price,
+        link=item.link,
+        thumbnail_url=item.thumbnail,
+        source=item.source,
+        category=item.category,
     )
     db.add(saved)
     await db.flush()
