@@ -1,4 +1,15 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
+
+const SPARKLES: { left: string; top: string; size: number; dur: number; delay: number }[] = Array.from({ length: 60 }).map((_, i) => {
+  const seed = (n: number) => ((Math.sin(i * 9.13 + n) + 1) / 2);
+  return {
+    left: `${seed(1) * 100}%`,
+    top: `${30 + seed(2) * 50}%`,
+    size: 1 + seed(3) * 2.5,
+    dur: 3 + seed(4) * 5,
+    delay: seed(5) * 6,
+  };
+});
 
 /**
  * Strat-style background:
