@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 
-const SPARKLES: { left: string; top: string; size: number; dur: number; delay: number }[] = Array.from({ length: 60 }).map((_, i) => {
+const SPARKLES: { left: string; top: string; size: number; dur: number; delay: number }[] = Array.from({ length: 32 }).map((_, i) => {
   const seed = (n: number) => ((Math.sin(i * 9.13 + n) + 1) / 2);
   return {
     left: `${seed(1) * 100}%`,
