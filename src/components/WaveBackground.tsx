@@ -176,7 +176,7 @@ export function WaveBackground() {
         </div>
       </div>
 
-      {/* Golden flowing arcs (jewelry-style luminous swooshes) */}
+      {/* Luminous golden ribbon — sweeping arc behind subject */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <svg
           className="absolute inset-0 h-full w-full"
@@ -184,72 +184,87 @@ export function WaveBackground() {
           preserveAspectRatio="xMidYMid slice"
         >
           <defs>
-            <linearGradient id="goldArcL" x1="0%" y1="50%" x2="100%" y2="50%">
-              <stop offset="0%" stopColor="rgba(231,201,138,0)" />
-              <stop offset="35%" stopColor="rgba(231,201,138,0.35)" />
-              <stop offset="55%" stopColor="rgba(251,243,226,0.55)" />
-              <stop offset="75%" stopColor="rgba(231,201,138,0.30)" />
-              <stop offset="100%" stopColor="rgba(231,201,138,0)" />
+            {/* Warm gold gradient, brighter toward center */}
+            <linearGradient id="goldRibbon" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="rgba(180,140,70,0)" />
+              <stop offset="12%" stopColor="rgba(198,156,86,0.45)" />
+              <stop offset="32%" stopColor="rgba(231,201,138,0.85)" />
+              <stop offset="50%" stopColor="rgba(255,240,205,1)" />
+              <stop offset="68%" stopColor="rgba(231,201,138,0.85)" />
+              <stop offset="88%" stopColor="rgba(198,156,86,0.45)" />
+              <stop offset="100%" stopColor="rgba(180,140,70,0)" />
             </linearGradient>
-            <linearGradient id="goldArcR" x1="0%" y1="50%" x2="100%" y2="50%">
-              <stop offset="0%" stopColor="rgba(231,201,138,0)" />
-              <stop offset="25%" stopColor="rgba(231,201,138,0.30)" />
-              <stop offset="50%" stopColor="rgba(251,243,226,0.60)" />
-              <stop offset="70%" stopColor="rgba(231,201,138,0.35)" />
-              <stop offset="100%" stopColor="rgba(231,201,138,0)" />
-            </linearGradient>
-            <filter id="goldBlur" x="-20%" y="-20%" width="140%" height="140%">
+
+            {/* Massive bloom for the outer halo */}
+            <filter id="bloomHuge" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="38" />
+            </filter>
+            <filter id="bloomBig" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="18" />
+            </filter>
+            <filter id="bloomMed" x="-20%" y="-20%" width="140%" height="140%">
               <feGaussianBlur stdDeviation="6" />
             </filter>
-            <filter id="goldBlurSoft" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="14" />
+            <filter id="bloomCore" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="1.4" />
             </filter>
           </defs>
 
-          {/* Left arc (soft halo) */}
-          <path
-            d="M -100 560 Q 400 360 820 470"
-            stroke="url(#goldArcL)"
-            strokeWidth="38"
-            fill="none"
-            filter="url(#goldBlurSoft)"
-            opacity="0.55"
-            style={{ animation: "arc-drift-l 18s ease-in-out infinite" }}
-          />
-          {/* Left arc (crisp core) */}
-          <path
-            d="M -80 555 Q 400 365 820 470"
-            stroke="url(#goldArcL)"
-            strokeWidth="3"
-            fill="none"
-            filter="url(#goldBlur)"
-            opacity="0.9"
-            style={{ animation: "arc-drift-l 18s ease-in-out infinite" }}
-          />
-
-          {/* Right arc (soft halo) */}
-          <path
-            d="M 780 470 Q 1180 360 1720 540"
-            stroke="url(#goldArcR)"
-            strokeWidth="44"
-            fill="none"
-            filter="url(#goldBlurSoft)"
-            opacity="0.6"
-            style={{ animation: "arc-drift-r 22s ease-in-out infinite" }}
-          />
-          {/* Right arc (crisp core) */}
-          <path
-            d="M 780 470 Q 1180 365 1720 535"
-            stroke="url(#goldArcR)"
-            strokeWidth="3"
-            fill="none"
-            filter="url(#goldBlur)"
-            opacity="0.95"
-            style={{ animation: "arc-drift-r 22s ease-in-out infinite" }}
-          />
+          <g style={{ animation: "ribbon-breathe 14s ease-in-out infinite", transformOrigin: "center" }}>
+            {/* Outer huge bloom */}
+            <path
+              d="M -80 760 Q 380 360 820 470 Q 1240 580 1700 320"
+              stroke="url(#goldRibbon)"
+              strokeWidth="120"
+              strokeLinecap="round"
+              fill="none"
+              filter="url(#bloomHuge)"
+              opacity="0.55"
+            />
+            {/* Mid halo */}
+            <path
+              d="M -60 740 Q 380 360 820 470 Q 1240 580 1690 330"
+              stroke="url(#goldRibbon)"
+              strokeWidth="60"
+              strokeLinecap="round"
+              fill="none"
+              filter="url(#bloomBig)"
+              opacity="0.85"
+            />
+            {/* Inner glow */}
+            <path
+              d="M -40 720 Q 380 360 820 470 Q 1240 580 1680 340"
+              stroke="url(#goldRibbon)"
+              strokeWidth="14"
+              strokeLinecap="round"
+              fill="none"
+              filter="url(#bloomMed)"
+              opacity="0.95"
+            />
+            {/* Hot core line */}
+            <path
+              d="M -30 715 Q 380 360 820 470 Q 1240 580 1675 345"
+              stroke="url(#goldRibbon)"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              fill="none"
+              filter="url(#bloomCore)"
+              opacity="1"
+            />
+          </g>
         </svg>
 
-        {/* Gold sparkle dust */}
+        {/* Center spotlight bloom that the ribbon passes through */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 32% 26% at 50% 52%, rgba(255,240,205,0.18), rgba(231,201,138,0.08) 40%, transparent 70%)",
+            mixBlendMode: "screen",
+          }}
+        />
+
+        {/* Gold sparkle dust scattered along the arc */}
         <div className="absolute inset-0">
           {SPARKLES.map((s, i) => (
             <span
@@ -261,8 +276,8 @@ export function WaveBackground() {
                 width: s.size,
                 height: s.size,
                 background:
-                  "radial-gradient(circle, rgba(251,243,226,0.95) 0%, rgba(231,201,138,0.5) 40%, transparent 70%)",
-                boxShadow: "0 0 6px rgba(231,201,138,0.5)",
+                  "radial-gradient(circle, rgba(255,245,215,1) 0%, rgba(231,201,138,0.55) 45%, transparent 75%)",
+                boxShadow: "0 0 8px rgba(231,201,138,0.7)",
                 animation: `sparkle-twinkle ${s.dur}s ease-in-out ${s.delay}s infinite`,
                 opacity: 0,
               }}
@@ -270,6 +285,7 @@ export function WaveBackground() {
           ))}
         </div>
       </div>
+
 
       <style>{`
         @keyframes arc-drift-l {
