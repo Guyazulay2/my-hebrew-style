@@ -297,13 +297,6 @@ export function WaveBackground() {
           50% { opacity: 1; transform: scale(1); }
         }
       `}</style>
-          50% { transform: translate(-10px, -8px); opacity: 1; }
-        }
-        @keyframes sparkle-twinkle {
-          0%, 100% { opacity: 0; transform: scale(0.6); }
-          50% { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
 
       {/* Bottom vignette into deep black */}
       <div
