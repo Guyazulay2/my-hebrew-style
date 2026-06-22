@@ -288,12 +288,15 @@ export function WaveBackground() {
 
 
       <style>{`
-        @keyframes arc-drift-l {
-          0%, 100% { transform: translate(0, 0); opacity: 0.85; }
-          50% { transform: translate(8px, -6px); opacity: 1; }
+        @keyframes ribbon-breathe {
+          0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.95; filter: brightness(1); }
+          50% { transform: translate3d(-10px, -6px, 0) scale(1.015); opacity: 1; filter: brightness(1.08); }
         }
-        @keyframes arc-drift-r {
-          0%, 100% { transform: translate(0, 0); opacity: 0.9; }
+        @keyframes sparkle-twinkle {
+          0%, 100% { opacity: 0; transform: scale(0.5); }
+          50% { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
           50% { transform: translate(-10px, -8px); opacity: 1; }
         }
         @keyframes sparkle-twinkle {
