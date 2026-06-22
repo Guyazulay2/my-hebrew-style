@@ -34,10 +34,11 @@ export function WaveBackground() {
     let height = 0;
     let dpr = Math.min(window.devicePixelRatio || 1, 2);
 
+    const isMobile = window.innerWidth < 768;
     const computeSpacing = () => {
       const w = window.innerWidth;
-      if (w < 480) return 10;
-      if (w < 900) return 12;
+      if (w < 480) return 16;
+      if (w < 900) return 15;
       return 14;
     };
     let spacing = computeSpacing();
@@ -45,9 +46,10 @@ export function WaveBackground() {
     const resize = () => {
       width = window.innerWidth;
       height = window.innerHeight;
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
+      // Cap DPR more aggressively for perf
+      dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.25 : 1.75);
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
       canvas.style.width = width + "px";
       canvas.style.height = height + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -57,11 +59,10 @@ export function WaveBackground() {
     window.addEventListener("resize", resize);
     const start = performance.now();
 
-    // Low-angle camera projection
     const project = (x: number, y: number, z: number) => {
       const cx = width / 2;
       const cy = height * 0.58;
-      const tilt = -1.18; // strong tilt, almost horizon view
+      const tilt = -1.18;
       const cosT = Math.cos(tilt);
       const sinT = Math.sin(tilt);
       const yT = y * cosT - z * sinT;
@@ -72,13 +73,25 @@ export function WaveBackground() {
       return { sx: cx + x * scale, sy: cy + yT * scale, scale, zT };
     };
 
+    // Frame pacing: cap to ~45fps to keep things smooth and cool
+    const targetFrameMs = 1000 / 45;
+    let lastFrame = 0;
+    let visible = true;
+    const onVisibility = () => { visible = !document.hidden; };
+    document.addEventListener("visibilitychange", onVisibility);
+
     const draw = (t: number) => {
-      const time = (t - start) * 0.00018; // gentle drift
+      rafRef.current = requestAnimationFrame(draw);
+      if (!visible) return;
+      if (t - lastFrame < targetFrameMs) return;
+      lastFrame = t;
+
+      const time = (t - start) * 0.00018;
       ctx.clearRect(0, 0, width, height);
 
-      const halfW = width * 1.8;
+      const halfW = width * 1.5;
       const cols = Math.ceil((halfW * 2) / spacing);
-      const rows = 160;
+      const rows = isMobile ? 110 : 150;
       const xStart = -halfW;
       const zStart = -spacing * 6;
 
@@ -87,17 +100,14 @@ export function WaveBackground() {
           const x = xStart + c * spacing;
           const z = zStart + r * spacing;
 
-          // amplitude envelope: weak on the LEFT, strong on the RIGHT
-          // (matches Strat: a flowing wave that crests on the right)
-          const nx = x / (width * 0.9); // -1..+1 across viewport
+          const nx = x / (width * 0.9);
           const env = Math.max(0, Math.min(1, (nx + 0.4) / 1.4));
           const envBoost = 0.25 + env * env * 1.4;
 
           const wave =
             (Math.sin(x * 0.0042 + z * 0.0026 + time * 1.2) * 22 +
               Math.cos(z * 0.0058 - time * 0.9) * 14 +
-              Math.sin((x * 0.7 + z * 1.1) * 0.0024 + time * 0.7) * 10 +
-              Math.cos((x - z * 0.5) * 0.0016 - time * 0.5) * 6) *
+              Math.sin((x * 0.7 + z * 1.1) * 0.0024 + time * 0.7) * 10) *
             envBoost;
 
           const p = project(x, wave, z);
@@ -107,12 +117,10 @@ export function WaveBackground() {
           const s = p.scale;
           const size = Math.max(0.3, s * 0.85);
 
-          // brightness: density envelope (right side) + crest highlight
           const crest = Math.max(0, (wave / 30) * 0.6 + 0.4);
           let alpha = Math.min(0.55, s * 0.55 * (0.25 + env) * crest);
-          // fade leftmost dots almost completely
           if (env < 0.2) alpha *= env / 0.2;
-          if (alpha < 0.015) continue;
+          if (alpha < 0.02) continue;
 
           ctx.fillStyle = `rgba(232,236,244,${alpha})`;
           ctx.beginPath();
@@ -120,14 +128,13 @@ export function WaveBackground() {
           ctx.fill();
         }
       }
-
-      rafRef.current = requestAnimationFrame(draw);
     };
     rafRef.current = requestAnimationFrame(draw);
 
     return () => {
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener("resize", resize);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
 
