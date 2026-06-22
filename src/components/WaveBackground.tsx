@@ -210,59 +210,59 @@ export function WaveBackground() {
             </filter>
           </defs>
 
-          <g style={{ animation: "ribbon-breathe 14s ease-in-out infinite", transformOrigin: "center" }}>
+          <g style={{ animation: "ribbon-breathe 16s ease-in-out infinite", transformOrigin: "center", willChange: "transform, opacity" }}>
             {/* Outer huge bloom */}
             <path
-              d="M -80 760 Q 380 360 820 470 Q 1240 580 1700 320"
+              d="M -80 820 Q 380 540 820 640 Q 1240 740 1700 520"
               stroke="url(#goldRibbon)"
-              strokeWidth="120"
+              strokeWidth="110"
               strokeLinecap="round"
               fill="none"
               filter="url(#bloomHuge)"
-              opacity="0.55"
+              opacity="0.32"
             />
             {/* Mid halo */}
             <path
-              d="M -60 740 Q 380 360 820 470 Q 1240 580 1690 330"
+              d="M -60 810 Q 380 545 820 640 Q 1240 740 1690 525"
               stroke="url(#goldRibbon)"
-              strokeWidth="60"
+              strokeWidth="48"
               strokeLinecap="round"
               fill="none"
               filter="url(#bloomBig)"
-              opacity="0.85"
+              opacity="0.55"
             />
             {/* Inner glow */}
             <path
-              d="M -40 720 Q 380 360 820 470 Q 1240 580 1680 340"
+              d="M -40 800 Q 380 550 820 640 Q 1240 740 1680 530"
               stroke="url(#goldRibbon)"
-              strokeWidth="14"
+              strokeWidth="10"
               strokeLinecap="round"
               fill="none"
               filter="url(#bloomMed)"
-              opacity="0.95"
+              opacity="0.7"
             />
             {/* Hot core line */}
             <path
-              d="M -30 715 Q 380 360 820 470 Q 1240 580 1675 345"
+              d="M -30 795 Q 380 552 820 640 Q 1240 740 1675 535"
               stroke="url(#goldRibbon)"
-              strokeWidth="1.6"
+              strokeWidth="1.2"
               strokeLinecap="round"
               fill="none"
               filter="url(#bloomCore)"
-              opacity="1"
+              opacity="0.75"
             />
           </g>
         </svg>
 
-        {/* Center spotlight bloom that the ribbon passes through */}
+        {/* Soft dark veil behind hero text for readability */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 32% 26% at 50% 52%, rgba(255,240,205,0.18), rgba(231,201,138,0.08) 40%, transparent 70%)",
-            mixBlendMode: "screen",
+              "radial-gradient(ellipse 45% 35% at 50% 38%, rgba(0,0,0,0.55), rgba(0,0,0,0.25) 55%, transparent 80%)",
           }}
         />
+
 
         {/* Gold sparkle dust scattered along the arc */}
         <div className="absolute inset-0">
